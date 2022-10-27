@@ -5,7 +5,9 @@ import Pagination from "./common/pagination";
 import { paginate } from "../utils/paginate";
 import ItemListGroup from "./common/itemListGroup";
 import MoviesTable from "./moviesTable";
+import { Link } from "react-router-dom";
 import _ from "lodash";
+import SearchBox from "./searchBox";
 
 class Movies extends Component {
   state = {
@@ -13,6 +15,8 @@ class Movies extends Component {
     genres: [],
     currentPage: 1,
     pageSize: 4,
+    searchQuery: "",
+    selectedGenre: null,
     sortColumn: { path: "title", order: "asc" },
   };
 
@@ -39,54 +43,67 @@ class Movies extends Component {
     this.setState({ sortColumn });
   };
 
+  handleSearch = (query) => {
+    this.setState({ searchQuery: query, selectedGenre: null, currentPage: 1 });
+  };
+
   handlePageChange = (page) => {
     this.setState({ currentPage: page }); // Means when the anchor tag is clicked, the currentPage in our state will be updated to whatever page was clicked on
   };
 
   handleGenreSelect = (genre) => {
-    if (genre === null || genre === undefined) {
-      this.setState({ selectedGenre: null, currentPage: 1 });
-    } else {
-      this.setState({ selectedGenre: genre, currentPage: 1 });
-    }
+    this.setState({ selectedGenre: genre, searchQuery: "", currentPage: 1 });
+  };
+
+  getPagedData = () => {
+    const {
+      pageSize,
+      currentPage,
+      sortColumn,
+      selectedGenre,
+      searchQuery,
+      movies: allMovies,
+    } = this.state;
+
+    let filtered = allMovies;
+    if (searchQuery)
+      filtered = allMovies.filter((m) =>
+        m.title.toLowerCase().startsWith(searchQuery.toLowerCase())
+      );
+    else if (selectedGenre && selectedGenre._id)
+      filtered = allMovies.filter((m) => m.genre._id === selectedGenre._id);
+
+    const sorted = _.orderBy(filtered, [sortColumn.path], [sortColumn.order]);
+
+    const movies = paginate(sorted, currentPage, pageSize);
+
+    return { totalCount: filtered.length, data: movies };
   };
 
   render() {
-    let {
-      pageSize,
-      currentPage,
-      movies: allMovies,
-      genres: allGenres,
-      selectedGenre,
-      sortColumn,
-    } = this.state;
-    let { length: count } = allMovies; //object destructuring the movies object. We destructure the length property and rename it count.
+    const { length: count } = this.state.movies;
+    const { pageSize, currentPage, sortColumn, searchQuery } = this.state;
+
     if (count === 0) return <p>There are no movies in the database.</p>;
 
-    let filteredMovies = allMovies.filter((movie) => {
-      return selectedGenre ? movie.genre._id === selectedGenre._id : allMovies;
-    });
-
-    const sortedMovies = _.orderBy(
-      filteredMovies,
-      [sortColumn.path],
-      [sortColumn.order]
-    );
-
-    let movies = paginate(sortedMovies, currentPage, pageSize);
+    const { totalCount, data: movies } = this.getPagedData();
 
     return (
       <React.Fragment>
         <div className="row m-2">
           <div className="col-2">
             <ItemListGroup
-              items={allGenres}
-              selectedItem={selectedGenre}
+              items={this.state.genres}
+              selectedItem={this.state.selectedGenre}
               onItemSelect={this.handleGenreSelect}
             ></ItemListGroup>
           </div>
           <div className="col">
-            <p>Showing {filteredMovies.length} movies in the database.</p>
+            <Link to="/movies/new">
+              <button className="btn btn-primary m-2">New Movie</button>
+            </Link>
+            <p>Showing {totalCount} movies in the database.</p>
+            <SearchBox value={searchQuery} onChange={this.handleSearch} />{" "}
             <MoviesTable
               movies={movies}
               sortColumn={sortColumn}
@@ -95,7 +112,7 @@ class Movies extends Component {
               onSort={this.handleSort}
             ></MoviesTable>
             <Pagination
-              itemsCount={filteredMovies.length} // the number of movies // this.movies.length was destructured and renamed to count
+              itemsCount={totalCount} // the number of movies // this.movies.length was destructured and renamed to count
               pageSize={pageSize}
               currentPage={currentPage}
               onPageChange={this.handlePageChange}

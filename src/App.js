@@ -7,6 +7,7 @@ import NotFound from "./components/common/notFound";
 import MovieForm from "./components/movieForm";
 import LoginForm from "./components/loginForm";
 import "./App.css";
+import RegisterForm from "./components/registerForm";
 
 function App() {
   return (
@@ -14,7 +15,9 @@ function App() {
       <NavBar></NavBar>
       <div className="content">
         <Switch>
+          <Route path="/register" component={RegisterForm} />
           <Route path="/login" component={LoginForm} />
+          {/* <Route path="/movies/new" component={MovieForm} /> */}
           <Route path="/movies/:id" component={MovieForm} />
           <Route path="/movies" component={Movies} />
           <Route path="/customers" component={Customers} />

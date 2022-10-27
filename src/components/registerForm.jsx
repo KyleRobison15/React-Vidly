@@ -1,20 +1,23 @@
-// THIS IS THE REFACTORED LOGIN FORM
-// WE EXTRACTED ALL THE REUSABLE CODE INTO form.jsx
-// FOR LEARNING PURPOSES, TAKE A LOOK AT loginFormOriginal.jsx to see what the code was before we extracted it
-
+/**
+ * Username should be a valid email
+ * Password should be Min 5 characters
+ * Register button is disabled until valid form
+ * When register button is clicked - log to console
+ */
 import React, { Component } from "react";
 import Joi from "joi-browser";
 import Form from "./common/form";
 
-class LoginForm extends Form {
+class RegisterForm extends Form {
   state = {
-    data: { username: "", password: "" },
+    data: { username: "", password: "", name: "" },
     errors: {},
   };
 
   schema = {
-    username: Joi.string().required().label("Username"),
-    password: Joi.string().required().label("Password"),
+    username: Joi.string().required().email().label("Username"),
+    password: Joi.string().required().min(5).label("Password"),
+    name: Joi.string().required().label("Name"),
   };
 
   doSubmit = () => {
@@ -25,16 +28,17 @@ class LoginForm extends Form {
   render() {
     return (
       <div>
-        <h1 className="display-1">Login</h1>
+        <h1 className="display-1">Register</h1>
         <form onSubmit={this.handleSubmit}>
           {/* We extracted these two input fields into a separate, reusable Input component input.jsx */}
           {this.renderInputElement("username", "Username")}
           {this.renderInputElement("password", "Password", "password")}
-          {this.renderSubmitButton("Login")}
+          {this.renderInputElement("name", "Name")}
+          {this.renderSubmitButton("Register")}
         </form>
       </div>
     );
   }
 }
 
-export default LoginForm;
+export default RegisterForm;
